@@ -1,0 +1,6 @@
+DB_HOST=localhost
+DB_PORT=5432
+DB_PASSWORD=demo
+DB_USER=demo
+DB_NAME=demo
+DEBUG=1

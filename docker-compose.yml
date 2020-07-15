@@ -1,0 +1,77 @@
+version: "3"
+
+volumes:
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
+  postgres_data: {}
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nz02
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/src
+      - ./config/nginx:/etc/nginx/conf.d
+    depends_on:
+      - web
+    networks:
+      - djangonetwork
+  web:
+    build:
+      context: .
+      dockerfile: compose/django/Dockerfile
+    container_name: dz02
+    depends_on:
+      - db
+    volumes:
+      - ./src:/src
+    expose:
+      - "8000"
+    links:
+      - redis
+    env_file:
+      - ./.envs/.django
+    networks:
+      - djangonetwork
+  db:
+    restart: always
+    build:
+      context: .
+      dockerfile: compose/postgres/Dockerfile
+    container_name: pz02
+    env_file:
+      - ./.envs/.postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    # volumes:
+    #   - local_postgres_data:/var/lib/postgresql/data
+    #   - local_postgres_data_backups:/backups
+    networks:
+      - djangonetwork
+  redis:
+    image: redis:alpine
+    container_name: rz02
+    ports:
+      - "6379:6379"
+    networks:
+      - djangonetwork
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: demo-pgadmin2 #you can change this
+    depends_on:
+      - db
+    ports:
+      - "5051:80"
+    links:
+      - db:db
+    networks:
+      - djangonetwork
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: root
+    restart: always
+networks:
+  djangonetwork:
+    driver: bridge
